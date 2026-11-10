@@ -7,7 +7,11 @@ import { validateBbox } from "../../shared/src/validate.ts";
 type Bbox = [number, number, number, number];
 type OsmElement = { type: "node" | "way" | "relation"; id: number; [key: string]: unknown };
 type OsmData = { elements: OsmElement[]; [key: string]: unknown };
-const SERVERS = ["https://overpass-api.de/api/interpreter", "https://overpass.private.coffee/api/interpreter"];
+const SERVERS = [
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.private.coffee/api/interpreter",
+  "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+];
 
 function checked(value: unknown): OsmData {
   const data = value as OsmData | null;
@@ -66,7 +70,7 @@ export async function fetchOsm(bbox: Bbox, selectors: (box: string) => string, f
       } catch (error) {
         const message = `${new URL(endpoint).hostname}: ${error instanceof Error ? error.message : error}`;
         errors.push(message);
-        console.warn(`  overpass ${message}${attempt + 1 < SERVERS.length * 2 ? "; trying the other public server" : ""}`);
+        console.warn(`  overpass ${message}${attempt + 1 < SERVERS.length * 2 ? "; trying the next public server" : ""}`);
       }
     }
     throw new Error(`OSM ${label} download failed (${errors.join("; ")}). Completed parts are cached; retry to resume.`);

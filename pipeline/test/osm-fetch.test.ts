@@ -59,6 +59,27 @@ test("gateway failures switch public servers and successful fallback stays prefe
   assert.ok(existsSync(file));
 });
 
+test("VK Maps handles failures from both other servers and stays preferred for missing chunks", async t => {
+  const { file } = fixture(t);
+  const servers: string[] = [];
+  t.mock.method(globalThis, "fetch", async (url: unknown) => {
+    const endpoint = String(url);
+    servers.push(endpoint);
+    return endpoint === "https://maps.mail.ru/osm/tools/overpass/api/interpreter"
+      ? Response.json({ elements: [] }) : new Response("unavailable", { status: 502 });
+  });
+  const selector = (box: string) => `way["highway"]${box};`;
+  await fetchOsm([0, 0, 0.02, 0.04], selector, file, "roads");
+  assert.deepEqual(servers, [
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.private.coffee/api/interpreter",
+    "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+    "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+  ]);
+  await fetchOsm([0, 0, 0.02, 0.04], selector, file, "roads");
+  assert.equal(servers.length, 4, "cached VK results need no further requests");
+});
+
 test("failed chunks never produce a complete cache and retry resumes completed parts", async t => {
   const { file, directory } = fixture(t);
   let calls = 0;
@@ -68,6 +89,7 @@ test("failed chunks never produce a complete cache and retry resumes completed p
   });
   const selector = (box: string) => `node["natural"="tree"]${box};`;
   await assert.rejects(fetchOsm([0, 0, 0.02, 0.04], selector, file, "trees"), /Completed parts are cached/);
+  assert.equal(calls, 7, "one successful chunk followed by two rounds across three servers");
   assert.equal(existsSync(file), false);
   assert.equal(readdirSync(join(directory, "overpass")).length, 1);
   calls = 0;
@@ -82,10 +104,10 @@ test("a brief outage gets a bounded second round before failing the chunk", asyn
   const servers: string[] = [];
   t.mock.method(globalThis, "fetch", async (url: unknown) => {
     servers.push(new URL(String(url)).hostname);
-    return servers.length < 3 ? new Response("busy", { status: 503 }) : Response.json({ elements: [] });
+    return servers.length < 4 ? new Response("busy", { status: 503 }) : Response.json({ elements: [] });
   });
   await fetchOsm([0, 0, 0.01, 0.01], box => `way["building"]${box};`, file, "osm");
-  assert.deepEqual(servers, ["overpass-api.de", "overpass.private.coffee", "overpass-api.de"]);
+  assert.deepEqual(servers, ["overpass-api.de", "overpass.private.coffee", "maps.mail.ru", "overpass-api.de"]);
   assert.ok(existsSync(file));
 });
 
