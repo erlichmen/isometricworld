@@ -1,0 +1,28 @@
+{
+  "name": "editor",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev --host 127.0.0.1 --port 4322",
+    "build": "astro build",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test test/*.test.ts",
+    "test:ui": "node --import tsx test/ui-smoke.ts"
+  },
+  "dependencies": {
+    "@isometric-world/shared": "*",
+    "@geoman-io/leaflet-geoman-free": "^2.18.0",
+    "astro": "^7.4.7",
+    "leaflet": "^1.9.4",
+    "openseadragon": "^6.1.1",
+    "sharp": "^0.35.5"
+  },
+  "devDependencies": {
+    "@types/leaflet": "^1.9.21",
+    "@types/node": "^26.6.6",
+    "@types/openseadragon": "^5.0.2",
+    "playwright-core": "^1.65.0",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}

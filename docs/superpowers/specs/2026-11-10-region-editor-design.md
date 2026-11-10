@@ -33,17 +33,21 @@ The editor and pipeline must consume the same configuration. Do not generate Typ
 
 The page has a region list, a geographic map and a properties panel. Selecting a region shows its origin, areas and city markers. Selecting an item opens its form. Unsaved changes are visible, and navigating away with changes requires confirmation.
 
+Every selection centers the geographic view: fit all configured places for a region, the rectangle for an area, or the saved centre and opening width for a city view. Re-selecting the current item recenters it after panning. Navigation leaves saved geometry and camera settings unchanged.
+
 Region fields: identifier on creation, title, origin latitude/longitude/height, camera heading, country, municipality names, credits and optional airport. Existing identifiers are fixed in this version. Area fields: identifier on creation, title, owning region and axis-aligned geographic rectangle. City fields: identifier on creation, title, owning region, centre and opening width in metres.
 
 Support creating and editing these records. Do not include deletion in the first version. Display a heading arrow to explain camera direction; a live 3D camera preview is outside this scope.
 
 ## OSM inspection
 
+The map includes an explicit place/address search using the Photon OpenStreetMap geocoder. Submit a query, then choose one of up to five results to center the view and show a temporary location marker. Searches do not alter the selected region, camera configuration or saved place definitions. Handle empty results, upstream failures and stale responses visibly. The loopback API validates queries, bounds upstream time/response size, caches repeated queries and limits requests to one per second. Retain OSM attribution and link Photon in the editor source note. No API key or additional package is needed.
+
 Load OSM data explicitly for a selected area, rather than automatically requesting an entire region. Offer building, road, tree, water and boundary layers. Clicking a feature displays its OSM identifier and tags, including height and building levels when present. Distinguish missing heights from real measurements.
 
 Use existing pipeline OSM query/cache helpers if their interfaces fit after inspection. Otherwise implement a bounded Overpass request through the local backend, with timeout, clear error messages and a local cache. Only return a completed response as usable data; do not silently accept truncated results. Keep raw OSM inspection data separate from editable place configuration.
 
-Retain visible © OpenStreetMap contributors attribution. Use only open data. Any additional basemap provider requires a documented licence and the project-required source credits before inclusion; the first version can render fetched features on a plain background.
+Display the standard OpenStreetMap background immediately so areas can be located and drawn before detailed feature inspection. Retain visible © OpenStreetMap contributors attribution. Direct browser tile requests retain Referer and normal HTTP caching; no bulk download, offline caching or prefetch. Automated tests mock tiles. Record the source and usage policy in ATTRIBUTION.md. Show a visible message when background tiles fail. Use only open data. Any additional basemap provider requires a documented licence and the project-required source credits before inclusion.
 
 ## Validation and protection
 
@@ -61,4 +65,14 @@ In the browser, check region selection, feature tags, creating a region, drawing
 
 ## Scope exclusions
 
-No React, database, hosted authentication, OSM uploads, pipeline job controls, painting controls, production publishing or deployment. No moving the existing web or pipeline folders. Preserve unrelated working-tree changes and the user's running dev server. Do not modify web files while a film render is active.
+No React, database, hosted authentication, OSM uploads, painting controls, production publishing or deployment. No moving the existing web or pipeline folders. Preserve unrelated working-tree changes and the user's running dev server. Do not modify web files while a film render is active.
+
+## Raw isometric build milestone
+
+Saved areas can explicitly start the existing fetch, ground, scene and render commands through a detached local worker. One global disk-backed lock protects pipeline working files and configuration saves. Jobs expose persistent stage status and bounded log tails across reloads, with failure details and retry after all worker/stage processes exit. Fixed spawn arguments never accept arbitrary commands or paths.
+
+Live build updates use GET /api/editor/builds/events with an optional area query, through the same loopback/same-origin checks. SSE sends the current full snapshot on connection and changed stage/status/log snapshots from watched worker files. Heartbeats reconcile stopped workers. Browser EventSource replaces polling, reconnects after dropped streams and initial HTTP failures, and preserves active-build locks across disconnects. Changing selection or starting a build closes the old stream; obsolete events cannot overwrite the latest state. Server watchers, heartbeat timers and slow-reader queues are cleaned up on disconnect; slow readers receive the latest state after draining.
+
+Before reusing caches, verify saved input revision and area/camera provenance, including prior failed builds before a render manifest was written. Do not delete incompatible caches; require a new area identifier. Refuse areas larger than 0.25° per side. Verify every expected render and height image before reporting success, including when the renderer exits successfully after a per-tile error.
+
+Compose an editor-only preview up to 4096 pixels on its longest side in data/editor, preserving original full-resolution tiles in data/derived. Show it in an OpenSeadragon dialog with a Raw render label and full source credits, including the required Copernicus text. This milestone does not run production export or change the public viewer cache. AI painting, publishing and deployment remain separate.

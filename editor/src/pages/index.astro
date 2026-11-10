@@ -1,0 +1,107 @@
+---
+import "../style.css";
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f5f3ed" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3 30 11 16 19 2 11z' fill='%234e705c'/%3E%3Cpath d='m2 17 14 8 14-8' fill='none' stroke='%234e705c' stroke-width='3'/%3E%3C/svg%3E" />
+    <title>World editor · Isometric World</title>
+  </head>
+  <body>
+    <header class="app-header">
+      <a class="brand" href="/" aria-label="Isometric World editor home"><span class="brand-mark" aria-hidden="true">◇</span><span>Isometric World<small>REGION EDITOR</small></span></a>
+      <div class="header-status"><span class="local-dot"></span> Local workspace <span class="separator">/</span><span id="save-state">Connecting…</span></div>
+      <div class="header-actions"><button id="reload" class="quiet" disabled>Reload from disk</button><button id="save" class="primary" disabled>Save changes <span aria-hidden="true">↗</span></button></div>
+    </header>
+    <div id="notice" role="status" aria-live="polite" hidden></div>
+    <main class="workspace">
+      <aside class="sidebar" aria-label="Place navigation">
+        <div class="sidebar-heading"><span class="eyebrow">YOUR WORLD</span><span class="badge">LOCAL</span></div>
+        <h1>Places & patches</h1>
+        <p class="muted intro">Shape the next piece of your world.</p>
+        <label class="field region-select">Region<select id="region-select" disabled aria-label="Current region"></select></label>
+        <button id="new-region" class="outline full" disabled><span aria-hidden="true">＋</span> New region</button>
+        <div class="nav-section-heading"><span>REGION</span></div>
+        <div id="region-item"></div>
+        <div class="nav-section-heading"><span>AREAS</span><button id="new-area" class="icon-button" aria-label="New area" disabled>＋</button></div>
+        <div id="area-list" class="item-list"></div>
+        <div class="nav-section-heading"><span>CITY VIEWS</span><button id="new-city" class="icon-button" aria-label="New city" disabled>＋</button></div>
+        <div id="city-list" class="item-list"></div>
+        <div class="sidebar-bottom"><span class="mini-diamond" aria-hidden="true">◇</span><p>A region holds the camera.<br />Areas define what gets painted.</p></div>
+      </aside>
+      <section class="map-panel" aria-label="Geographic workspace">
+        <div class="map-heading"><div><span class="eyebrow">GEOGRAPHIC WORKSPACE</span><h2 id="map-title">Opening your world…</h2></div><button id="fit" class="outline" disabled>Fit region <span aria-hidden="true">⌖</span></button></div>
+        <div class="place-search">
+          <form id="place-search-form" role="search" aria-label="Find a place">
+            <label for="place-query" class="sr-only">Place or address</label>
+            <input id="place-query" type="search" placeholder="Find a city, street or place…" minlength="2" maxlength="200" required autocomplete="off" />
+            <button id="search-place" class="primary" type="submit">Search</button>
+          </form>
+          <div id="place-search-results" hidden>
+            <p id="place-search-status" role="status" aria-live="polite"></p>
+            <ul id="place-result-list" aria-label="Place search results"></ul>
+          </div>
+        </div>
+        <div class="map-wrap">
+          <div id="map" tabindex="0" aria-label="Geographic map. Use arrow keys to pan and plus or minus to zoom."></div>
+          <div class="map-tools" aria-label="Map tools"><button id="draw-area" disabled>▱ <span>Draw area</span></button><button id="place-city" disabled>⊙ <span>Place city</span></button><button id="cancel-tool" hidden>Cancel</button></div>
+          <div class="map-north" aria-label="North is up"><span>↑</span>N</div>
+          <div id="basemap-status" class="basemap-status" role="status" hidden>Background map unavailable. Check your connection; drawing controls still work.</div>
+          <div id="map-hint" class="map-hint">Select an area, then load its OSM features below.</div>
+          <div id="coordinates" class="coordinates">WGS84 · latitude / longitude</div>
+        </div>
+        <div class="osm-panel">
+          <div class="osm-heading"><div><span class="eyebrow">OPEN DATA</span><h3>Explore the source</h3></div><button id="load-osm" class="primary" disabled>Load area OSM <span aria-hidden="true">↓</span></button></div>
+          <p id="osm-status" class="muted" role="status" aria-live="polite">Choose an area to inspect buildings, streets and natural features.</p>
+          <div class="layer-toggles" aria-label="OSM layers">
+            <label><input type="checkbox" value="buildings" checked /><span class="layer-key buildings"></span>Buildings</label>
+            <label><input type="checkbox" value="roads" checked /><span class="layer-key roads"></span>Roads</label>
+            <label><input type="checkbox" value="trees" checked /><span class="layer-key trees"></span>Trees</label>
+            <label><input type="checkbox" value="water" checked /><span class="layer-key water"></span>Water</label>
+            <label><input type="checkbox" value="boundaries" checked /><span class="layer-key boundaries"></span>Boundaries</label>
+          </div>
+          <p class="source-note">OpenStreetMap background · Search by <a href="https://photon.komoot.io/" target="_blank" rel="noopener">Photon</a> · load area OSM to inspect individual features</p>
+        </div>
+      </section>
+      <aside class="inspector" aria-label="Properties and OSM inspector">
+        <div class="inspector-heading"><span class="eyebrow">PROPERTIES</span><span id="item-kind" class="badge">REGION</span></div>
+        <h2 id="item-title">Select a place</h2>
+        <p id="item-description" class="muted"></p>
+        <p id="lock-note" class="lock-note" hidden></p>
+        <form id="properties" autocomplete="off"></form>
+        <section class="build-panel" aria-label="Build isometric map">
+          <span class="eyebrow">ISOMETRIC MAP</span>
+          <h3>Build a preview</h3>
+          <p id="build-status" class="muted" role="status" aria-live="polite">Select an area to build its raw isometric map.</p>
+          <ol id="build-stages" aria-label="Build stages" hidden><li data-stage="fetch">Data</li><li data-stage="ground">Terrain</li><li data-stage="scene">Scene</li><li data-stage="render">Render</li><li data-stage="preview">Preview</li></ol>
+          <div class="build-actions"><button id="build-area" class="primary full" disabled>Build isometric preview</button><button id="view-render" class="outline full" hidden>View preview</button></div>
+          <details id="build-log-details" hidden><summary>Build log</summary><pre id="build-log" tabindex="0" aria-label="Build output">No build output yet.</pre></details>
+        </section>
+        <section class="feature-section" aria-label="OSM feature inspector"><span class="eyebrow">FEATURE INSPECTOR</span><h3 id="feature-title">A closer look</h3><label id="feature-picker" class="field" hidden>Inspect a feature<select id="feature-select"><option value="">Choose a feature…</option></select></label><div id="feature-details"><p class="muted">Load OSM data and click a feature to see its original tags.</p></div></section>
+      </aside>
+    </main>
+    <dialog id="create-dialog" aria-labelledby="create-title">
+      <form id="create-form">
+        <span class="eyebrow">ADD TO YOUR WORLD</span><h2 id="create-title">New region</h2>
+        <p id="create-description" class="muted"></p>
+        <label class="field">Title<input name="title" required maxlength="200" placeholder="e.g. Haifa" /></label>
+        <label class="field">Identifier<input name="id" required maxlength="100" pattern="[a-z0-9]+(-[a-z0-9]+)*" placeholder="e.g. haifa" /><small>Lowercase letters, numbers and hyphens. Fixed after creation.</small></label>
+        <p id="create-error" class="form-error" role="alert"></p>
+        <div class="dialog-actions"><button type="button" id="cancel-create" class="quiet">Cancel</button><button type="submit" class="primary">Create draft</button></div>
+      </form>
+    </dialog>
+    <dialog id="render-preview-dialog" class="render-dialog" aria-labelledby="render-preview-title">
+      <div class="render-dialog-heading"><div><span class="eyebrow">RAW ISOMETRIC RENDER</span><h2 id="render-preview-title">Isometric preview</h2></div><button id="close-render-preview" class="outline" aria-label="Close isometric preview">Close</button></div>
+      <p id="render-preview-error" class="form-error" role="alert" hidden>Could not load the preview image. Close this view and retry.</p>
+      <div id="render-preview" tabindex="0" aria-label="Raw isometric preview. Drag to pan, scroll to zoom, or use the zoom controls."></div>
+      <div class="render-view-controls"><button id="render-zoom-in" class="outline" aria-label="Zoom in on preview">＋</button><button id="render-zoom-out" class="outline" aria-label="Zoom out of preview">−</button><button id="render-home" class="outline">Fit preview</button><span class="muted">Drag to pan · Scroll to zoom</span></div>
+      <footer><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap contributors</a><p id="render-preview-credits"></p></footer>
+    </dialog>
+    <script>
+      import "../editor.ts";
+    </script>
+  </body>
+</html>

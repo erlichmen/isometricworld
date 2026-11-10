@@ -9,7 +9,7 @@ Hand-painted isometric city maps from open data. Read `README.md` (pipeline, lay
    proprietary imagery or geometry, not even "just for reference" or as a style source. The project was
    rebuilt once to remove Google-derived content. If a source's licence is unclear, stop and ask.
 2. **Every source gets credited.** A new data source is not done until it is in `ATTRIBUTION.md` (source,
-   use, licence, obligations), in the region's `credits` in `pipeline/src/places.ts` (shown on the map's
+   use, licence, obligations), in the region's `credits` in `shared/src/world.json` (shown on the map's
    video mode and on social clips), and in the footer (`web/src/scripts/map.ts`) when it has its own link.
 3. **Keep the licence terms intact**: "© OpenStreetMap contributors" visible wherever the map or a video is
    shown (ODbL); Copernicus DEM text as written in `ATTRIBUTION.md`; "Painted with AI" on clips; the
@@ -26,16 +26,16 @@ Hand-painted isometric city maps from open data. Read `README.md` (pipeline, lay
 
 ## Concepts
 
-- **Region** (`REGIONS` in `pipeline/src/places.ts`): one flat map. One camera in a local East-North-Up frame
+- **Region** (`regions` in `shared/src/world.json`, exported as `REGIONS`): one flat map. One camera in a local East-North-Up frame
   at `origin`, one tile pyramid on R2 under `regions/<region>/` (see Hosting). Accurate for cities within ~150 km of
   the origin, which share the map and can be scrolled between.
-- **City** (`CITIES` in `places.ts`): a named view into a region. `/<city-slug>` opens the region centred
+- **City** (`cities` in `shared/src/world.json`, exported as `CITIES`): a named view into a region. `/<city-slug>` opens the region centred
   on it. Slugs are lowercase, ASCII, hyphenated (`tel-aviv-yafo`); capitalised links redirect (404 page).
 - **Hosting** (`pipeline/src/hosting.ts`, README "Hosting"): tiles and region data live only on R2
   (`isometricworldtiles`, `regions/<region>/` under `TILES_ORIGIN` from `.env`), never in git or
   `web/public`. `export` writes changed files to the cache `data/web/regions/<region>/`, `npm run dev` shows
   the cache over production, `publish` uploads and empties the cache.
-- **Area** (`AREAS` in `pipeline/src/areas.ts`): a bbox the pipeline fetches, renders and paints. Belongs
+- **Area** (`areas` in `shared/src/world.json`, exported as `AREAS`): a bbox the pipeline fetches, renders and paints. Belongs
   to one region; CLIs call `openArea(name)`, which switches the camera to that region.
 
 ## Adding a city
@@ -66,9 +66,9 @@ Search for, and record URL + licence of each:
 
 ### 3. Code
 
-- `places.ts`: new region (title, `origin` at the city's central square, `headingDeg`, `country`,
+- `shared/src/world.json` (`regions` and `cities`, or use `npm run editor`): new region (title, `origin` at the city's central square, `headingDeg`, `country`,
   `municipalities`, optional `airport`, `credits`) and the city (`title`, `region`, `center`, `widthM`).
-- `areas.ts`: area(s) with `region` and bbox `[south, west, north, east]`; start small (a ~1 km test
+- `shared/src/world.json` (`areas`, or draw in the editor): area(s) with `region` and bbox `[south, west, north, east]`; start small (a ~1 km test
   patch, like `rothschild`) before the whole city.
 - `fetch.ts` / `scene.ts`: the Tel Aviv municipal layers (ArcGIS 513 buildings, 574 canopy) are
   Tel Aviv-only. Add the new city's sources behind a per-region/per-area switch, or rely on the OSM

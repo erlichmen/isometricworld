@@ -1,0 +1,81 @@
+{
+  "regions": {
+    "israel-center": {
+      "title": "Israel · Center",
+      "origin": {
+        "lat": 32.0778,
+        "lon": 34.774,
+        "h": 0
+      },
+      "headingDeg": 340,
+      "country": "Israel",
+      "municipalities": [
+        "תל־אביב–יפו",
+        "רמת גן",
+        "גבעתיים",
+        "בני ברק",
+        "חולון",
+        "בת ים",
+        "הרצליה",
+        "רמת השרון",
+        "פתח תקווה",
+        "קריית אונו",
+        "אור יהודה",
+        "גבעת שמואל"
+      ],
+      "airport": {
+        "lat": 32.0055,
+        "lon": 34.8854,
+        "runwayHeadingDeg": 117
+      },
+      "credits": [
+        "Map data © OpenStreetMap contributors · Tel Aviv-Yafo Municipality",
+        "Terrain: Copernicus DEM © DLR, Airbus DS · Painted with AI"
+      ]
+    }
+  },
+  "cities": {
+    "tel-aviv-yafo": {
+      "title": "Tel Aviv-Yafo",
+      "region": "israel-center",
+      "center": [
+        32.0745,
+        34.781
+      ],
+      "widthM": 5200
+    }
+  },
+  "areas": {
+    "tlv-core": {
+      "title": "Tel Aviv-Yafo · Ramat Gan",
+      "region": "israel-center",
+      "bbox": [
+        32.035,
+        34.735,
+        32.108,
+        34.835
+      ]
+    },
+    "rothschild": {
+      "title": "Rothschild Blvd",
+      "region": "israel-center",
+      "bbox": [
+        32.0605,
+        34.7705,
+        32.0675,
+        34.7795
+      ]
+    },
+    "kohav-yair": {
+      "title": "כוכב יאיר",
+      "region": "israel-center",
+      "bbox": [
+        32.2017524,
+        34.9718857,
+        32.2361076,
+        35.0160027
+      ]
+    }
+  },
+  "defaultCity": "tel-aviv-yafo"
+}

@@ -7,6 +7,9 @@
 node_modules/
 web/dist/
 web/.astro/
+editor/dist/
+editor/.astro/
+.playwright-mcp/
 .wrangler/
 pipeline/page/dist/
 
