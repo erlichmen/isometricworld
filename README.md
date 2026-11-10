@@ -39,7 +39,16 @@ datasets and licences are acceptable, code changes, pipeline commands and checks
 
 ## Regions and cities
 
-`pipeline/src/places.ts` is the one table of places, shared by the pipeline and the site.
+This is an npm-workspaces monorepo: `web/` is the public viewer, `pipeline/` builds the map,
+`editor/` is the local geographic editor, and `shared/` holds place types and configuration.
+
+Run `npm run editor` and open http://127.0.0.1:4322 to inspect OSM features, create regions, draw areas,
+configure city views and build raw isometric previews. Select a saved area and use **Build isometric preview**;
+stage progress, logs and a zoomable result appear in the editor. Changes stay in a draft until saved; existing map cameras are protected.
+See [editor/README.md](editor/README.md) for editing, checks and limitations. The editor does not publish or deploy.
+
+`shared/src/world.json` is the one table of places, shared by the pipeline, editor and site.
+`pipeline/src/places.ts` and `pipeline/src/areas.ts` retain their existing exports for callers.
 
 - A **region** is one flat map: one orthographic camera in a local East-North-Up frame at the region's
   origin, one tile pyramid under `regions/<region>/` on R2 (see Hosting). A flat map stays accurate (~1° of building lean
@@ -134,11 +143,11 @@ npm -w pipeline exec tsx src/film.ts http://localhost:<port>/ ../video/tel-aviv-
 | publish | `pipeline/src/publish.ts` | Uploads the cache to the R2 bucket (tiles and previews first, `world.json` last), checks every upload, records the published state, empties the cache. |
 | web | `web/src/scripts/map.ts`, `traffic.ts`, `cats.ts`, `sky.ts` | OpenSeadragon deep zoom: a sparse pyramid with a tile index (no 404s), level blending, and zoom limited to the metro. A canvas overlay draws borders, labels, and simulated cars and buses on OSM roads (split at every shared node): lanes within the drawn asphalt, car following with safe gaps, junctions taken in turns by approach, drifting cruise speeds; hidden behind buildings using the height pass and under bridges (higher OSM layer). A few street cats (~1 per 900 m of street) sit and stroll on the pavements when zoomed in close; small flocks of green parakeets dart over the streets, and every ~2 min an airliner comes in from the sea on the Ben Gurion approach and fades out inland. Keys: **B** borders · **T** traffic · **P** raw render · **I** about · **V** video mode (`?video`). `/#metro` shows the whole metro. |
 
-**Add an area:** add its bbox (and region) to `pipeline/src/areas.ts`, then run fetch, ground, scene, render, paint and export.
+**Add an area:** draw it in the editor, or add its bbox and region to `areas` in `shared/src/world.json`, then run fetch, ground, scene, render, paint and export.
 Areas of one region share its camera and grid, so they line up.
 
-**Add a city:** in the same region, add it to `CITIES` in `places.ts` (centre + width) and render its areas.
-Far away: add a region (origin, heading, municipalities, credits), run `npm -w pipeline run boundaries -- <region>`, then areas and cities as above.
+**Add a city:** create a city view in the editor, or add it to `cities` in `shared/src/world.json` (centre + width), and render its areas.
+Far away: create a region (origin, heading, municipalities, credits), run `npm -w pipeline run boundaries -- <region>`, then areas and cities as above.
 Tel Aviv-specific sources (municipal buildings and canopy in `fetch.ts`/`scene.ts`) need an OSM fallback elsewhere.
 
 ## Licence

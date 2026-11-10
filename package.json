@@ -4,7 +4,9 @@
   "type": "module",
   "workspaces": [
     "pipeline",
-    "web"
+    "web",
+    "shared",
+    "editor"
   ],
   "scripts": {
     "fetch": "npm -w pipeline run fetch --",
@@ -15,6 +17,9 @@
     "export": "npm -w pipeline run export --",
     "og": "npm -w pipeline run og --",
     "dev": "npm -w web run dev",
+    "editor": "npm -w editor run dev",
+    "test:editor": "npm -w shared test && npm -w editor test",
+    "typecheck:editor": "npm -w shared run typecheck && npm -w editor run typecheck",
     "build": "npm -w web run build",
     "typecheck": "npm -w pipeline run typecheck && npm -w web run astro -- check",
     "publish": "npm -w pipeline run publish --",

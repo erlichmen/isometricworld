@@ -16,6 +16,7 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { openArea } from "./areas.ts";
 import { RAW } from "./paths.ts";
+import { fetchOsm } from "./osm-fetch.ts";
 
 const TLV = "https://gisn.tel-aviv.gov.il/arcgis/rest/services/IView2/MapServer/{layer}/query";
 const UA = { "User-Agent": "isometric-world/0.3 (open-data isometric map)" };
@@ -59,19 +60,6 @@ async function arcgis(layer: number, bbox: [number, number, number, number], fie
   return { type: "FeatureCollection", features: [...seen.values()] };
 }
 
-async function overpass(query: string) {
-  for (let attempt = 1; attempt <= 5; attempt++) {
-    const r = await fetch("https://overpass-api.de/api/interpreter", {
-      method: "POST", headers: { ...UA, "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({ data: query }),
-    });
-    if (r.ok) return r.json();
-    console.warn(`  overpass ${r.status}, retrying…`);
-    await new Promise((res) => setTimeout(res, 15_000 * attempt));
-  }
-  throw new Error("overpass failed");
-}
-
 const name = process.argv[2] ?? "tlv-core";
 const area = openArea(name);
 const dir = join(RAW, name);
@@ -83,27 +71,16 @@ if (!existsSync(join(dir, "tlv_buildings.geojson")))
 if (!existsSync(join(dir, "tlv_canopy.geojson")))
   writeFileSync(join(dir, "tlv_canopy.geojson"), JSON.stringify(await arcgis(574, area.bbox, "OBJECTID", "OBJECTID")));
 if (!existsSync(join(dir, "osm.json"))) {
-  const [s, w, n, e] = area.bbox;
-  const b = `(${s},${w},${n},${e})`;
-  const data = await overpass(`[out:json][timeout:300];
-(way["building"]${b}; relation["building"]${b}; node["natural"="tree"]${b};);
-out body geom;`);
-  writeFileSync(join(dir, "osm.json"), JSON.stringify(data));
+  const data = await fetchOsm(area.bbox, b => `way["building"]${b}; relation["building"]${b}; node["natural"="tree"]${b};`, join(dir, "osm.json"), "osm");
   console.log(`  osm: ${data.elements.length} elements`);
 }
 if (!existsSync(join(dir, "roads.json"))) {
-  const [s, w, n, e] = area.bbox;
-  const data = await overpass(`[out:json][timeout:300];
-way["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|motorway_link|trunk_link|primary_link|secondary_link|tertiary_link|living_street|service)$"]["area"!="yes"](${s},${w},${n},${e});
-out body geom;`);
-  writeFileSync(join(dir, "roads.json"), JSON.stringify(data));
+  const data = await fetchOsm(area.bbox, b => `way["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|motorway_link|trunk_link|primary_link|secondary_link|tertiary_link|living_street|service)$"]["area"!="yes"]${b};`, join(dir, "roads.json"), "roads");
   console.log(`  roads: ${data.elements.length} ways`);
 }
 if (!existsSync(join(dir, "ground.json"))) {
   const [s, w, n, e] = area.bbox, m = 0.02;
-  const b = `(${s - m},${w - m},${n + m},${e + m})`;
-  const data = await overpass(`[out:json][timeout:600][maxsize:1073741824];
-(
+  const data = await fetchOsm([Math.max(-90, s - m), Math.max(-180, w - m), Math.min(90, n + m), Math.min(180, e + m)], b => `
   way["highway"]["tunnel"!~"yes|building_passage"]${b};
   way["area:highway"]${b};
   way["railway"~"^(rail|light_rail|tram)$"]["tunnel"!="yes"]${b};
@@ -115,9 +92,7 @@ if (!existsSync(join(dir, "ground.json"))) {
   nwr["amenity"~"^(parking|school|university|college|hospital|grave_yard)$"]${b};
   nwr["man_made"~"^(pier|breakwater|groyne|bridge)$"]${b};
   nwr["place"="square"]${b};
-);
-out body geom;`);
-  writeFileSync(join(dir, "ground.json"), JSON.stringify(data));
+`, join(dir, "ground.json"), "ground");
   console.log(`  ground: ${data.elements.length} elements`);
 }
 mkdirSync(join(RAW, "dem"), { recursive: true });

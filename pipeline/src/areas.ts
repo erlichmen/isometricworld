@@ -1,27 +1,9 @@
 import { CAMERA, llhToPixel, useRegion } from "./camera.ts";
 
-/** A rendered patch of a region (see places.ts); all pipeline steps work per area. */
-export interface Area {
-  title: string;
-  region: string;
-  /** south, west, north, east (WGS84) */
-  bbox: [number, number, number, number];
-}
-
-export const AREAS: Record<string, Area> = {
-  /** Jaffa → Yarkon Park → Ramat Gan, including the sea off the coast. */
-  "tlv-core": {
-    title: "Tel Aviv-Yafo · Ramat Gan",
-    region: "israel-center",
-    bbox: [32.035, 34.735, 32.108, 34.835],
-  },
-  /** Small test patch around Rothschild Blvd. */
-  rothschild: {
-    title: "Rothschild Blvd",
-    region: "israel-center",
-    bbox: [32.0605, 34.7705, 32.0675, 34.7795],
-  },
-};
+import { AREAS } from "../../shared/src/index.ts";
+import type { Area } from "../../shared/src/index.ts";
+export { AREAS };
+export type { Area };
 
 /** Look up an area and switch the camera to its region: call before any projection. */
 export function openArea(name: string): Area {
